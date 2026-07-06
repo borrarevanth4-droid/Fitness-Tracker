@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String
+  name          String
+  role          Role           @default(USER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  sessions      Session[]
+  experiments   Experiment[]
+  scores        Score[]
+  notifications Notification[]
+  conversations AiConversation[]
+  userBadges    UserBadge[]
+}
+
+enum Role {
+  ADMIN
+  USER
+  GUEST
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Experiment {
+  id          String             @id @default(uuid())
+  title       String
+  description String?
+  userId      String
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isPublic    Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  objects     ExperimentObject[]
+  recordings  Recording[]
+}
+
+model ExperimentObject {
+  id           String     @id @default(uuid())
+  experimentId String
+  experiment   Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  type         String     // e.g., 'cube', 'sphere'
+  mass         Float
+  positionX    Float
+  positionY    Float
+  positionZ    Float
+  color        String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Scene {
+  id          String   @id @default(uuid())
+  name        String
+  gravity     Float    @default(-9.81)
+  description String?
+}
+
+model Challenge {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  difficulty  String   // e.g., 'EASY', 'MEDIUM', 'HARD'
+  targetScore Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  scores      Score[]
+}
+
+model Score {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeId String
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  score       Int
+  createdAt   DateTime  @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AiConversation {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  messages  AiMessage[]
+}
+
+model AiMessage {
+  id             String         @id @default(uuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String         // 'user' | 'assistant'
+  content        String
+  createdAt      DateTime       @default(now())
+}
+
+model Recording {
+  id           String     @id @default(uuid())
+  experimentId String
+  experiment   Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  url          String
+  duration     Int        // in seconds
+  createdAt    DateTime   @default(now())
+}
+
+model Badge {
+  id          String      @id @default(uuid())
+  name        String
+  description String
+  icon        String
+  createdAt   DateTime    @default(now())
+
+  userBadges  UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  earnedAt  DateTime @default(now())
+
+  @@unique([userId, badgeId])
+}

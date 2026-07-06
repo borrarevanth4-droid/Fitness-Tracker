@@ -1,0 +1,16 @@
+{
+  "name": "antigravity",
+  "version": "1.0.0",
+  "description": "AntiGravity Physics Platform",
+  "scripts": {
+    "dev": "pnpm --parallel --filter frontend --filter backend dev",
+    "build": "pnpm --filter backend build && pnpm --filter frontend build",
+    "start": "pnpm --parallel --filter frontend --filter backend start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
